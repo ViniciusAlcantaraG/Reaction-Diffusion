@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -O3 -Wall -std=c++17
+CXXFLAGS = -O3 -ffast-math -march=native -flto -Wall -std=c++17
 LDFLAGS = -lraylib -lgdi32 -lwinmm
 
 TARGET = morphogenesis.exe

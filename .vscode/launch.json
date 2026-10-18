@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "run morphogenesis",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/morphogenesis.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "integratedTerminal",
+            "preLaunchTask": "build"
+        }
+    ]
+}

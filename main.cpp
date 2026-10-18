@@ -73,10 +73,10 @@ void update_reaction_diffusion(){
             next_grid[r][c].first += grid[wrap(r+1, ROW_SIZE)][wrap(c+1, COL_SIZE)].first * D_A * 0.05;
             
             // 2. Left, Right, Up, Down updates
-            next_grid[r][c].first += grid[r][c-1].first * D_A * 0.2;
-            next_grid[r][c].first += grid[r][c+1].first * D_A * 0.2;
-            next_grid[r][c].first += grid[r-1][c].first * D_A * 0.2;
-            next_grid[r][c].first += grid[r+1][c].first * D_A * 0.2; 
+            next_grid[r][c].first += grid[r][wrap(c-1, COL_SIZE)].first * D_A * 0.2;
+            next_grid[r][c].first += grid[r][wrap(c+1, COL_SIZE)].first * D_A * 0.2;
+            next_grid[r][c].first += grid[wrap(r-1, ROW_SIZE)][c].first * D_A * 0.2;
+            next_grid[r][c].first += grid[wrap(r+1, ROW_SIZE)][c].first * D_A * 0.2; 
             
             // 3. Remove from the center cell
             next_grid[r][c].first -= grid[r][c].first * D_A * -1;
@@ -88,15 +88,15 @@ void update_reaction_diffusion(){
             next_grid[r][c].first += f*(1-grid[r][c].first);
 
             // Update B chemical with the same steps (Reaction is positive and kill instead of feed)
-            next_grid[r][c].second += grid[r-1][c-1].second * D_B * 0.05;
-            next_grid[r][c].second += grid[r-1][c+1].second * D_B * 0.05;
-            next_grid[r][c].second += grid[r+1][c-1].second * D_B * 0.05;
-            next_grid[r][c].second += grid[r+1][c+1].second * D_B * 0.05;
+            next_grid[r][c].second += grid[wrap(r-1, ROW_SIZE)][wrap(c-1, COL_SIZE)].second * D_B * 0.05;
+            next_grid[r][c].second += grid[wrap(r-1, ROW_SIZE)][wrap(c+1, COL_SIZE)].second * D_B * 0.05;
+            next_grid[r][c].second += grid[wrap(r+1, ROW_SIZE)][wrap(c-1, COL_SIZE)].second * D_B * 0.05;
+            next_grid[r][c].second += grid[wrap(r+1, ROW_SIZE)][wrap(c+1, COL_SIZE)].second * D_B * 0.05;
             
-            next_grid[r][c].second += grid[r][c-1].second * D_B * 0.2;
-            next_grid[r][c].second += grid[r][c+1].second * D_B * 0.2;
-            next_grid[r][c].second += grid[r-1][c].second * D_B * 0.2;
-            next_grid[r][c].second += grid[r+1][c].second * D_B * 0.2; 
+            next_grid[r][c].second += grid[r][wrap(c-1, COL_SIZE)].second * D_B * 0.2;
+            next_grid[r][c].second += grid[r][wrap(c+1, COL_SIZE)].second * D_B * 0.2;
+            next_grid[r][c].second += grid[wrap(r-1, ROW_SIZE)][c].second * D_B * 0.2;
+            next_grid[r][c].second += grid[wrap(r+1, ROW_SIZE)][c].second * D_B * 0.2; 
             
             next_grid[r][c].second -= grid[r][c].second * D_B * -1;
 

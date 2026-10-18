@@ -1,11 +1,11 @@
-#include "raylib.h"
+#include <raylib.h>
 #include <bits/stdc++.h>
 
 using namespace std;
 
 
-#define SCREEN_WIDTH 600
-#define SCREEN_HEIGHT 600
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 800
 #define SCALE 5
 
 const int COL_SIZE = SCREEN_HEIGHT / SCALE;
@@ -14,8 +14,8 @@ const int ROW_SIZE = SCREEN_WIDTH / SCALE;
 vector<vector<pair<float, float>>> grid(ROW_SIZE, vector<pair<float,float>>(COL_SIZE, {1.0f,0.0f}));
 vector<vector<pair<float, float>>> next_grid(ROW_SIZE, vector<pair<float,float>>(COL_SIZE, {1.0f,0.0f}));
 
-float f = 0.05;
-float k = 0.06;
+float f = 0.0545;
+float k = 0.062;
 float D_A = 1.0;
 float D_B = 0.5;
 
@@ -32,6 +32,15 @@ int main() {
     // 2. Load it onto the GPU as a texture
     Texture2D screenTexture = LoadTextureFromImage(screenImage);
 
+    // Set a group of cells with chemical B
+    for (int r = (ROW_SIZE/2)-5; r < (ROW_SIZE/2)+5; r++){
+        for (int c = (COL_SIZE/2)-5; c < (COL_SIZE/2)+5; c++){
+
+            grid[r][c].first = 0.0f;
+            grid[r][c].second = 1.0f;
+        }
+        
+    }
     while (!WindowShouldClose()) {
 
         // Perform Reaction-Diffusion via Gray-Scott equations

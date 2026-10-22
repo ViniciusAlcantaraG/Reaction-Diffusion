@@ -4,8 +4,8 @@
 using namespace std;
 
 
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 800
+#define SCREEN_WIDTH 1000
+#define SCREEN_HEIGHT 1000
 #define SCALE 5
 
 constexpr int COLS = SCREEN_WIDTH / SCALE;
@@ -21,8 +21,10 @@ vector<float> B_next(N, 0.0f);
 // CPU pixel buffer pushed to the GPU once per frame.
 vector<Color> frame_buffer(N, BLACK);
 
-const float f = 0.018f;
-const float k = 0.051f;
+// Gray-Scott feed/kill rates - settable at runtime via CLI (--f / --k),
+// defaults reproduce the interactive behaviour.
+float f = 0.098f;
+float k = 0.057f;
 const float D_A = 1.0f;
 const float D_B = 0.5f;
 
@@ -37,6 +39,7 @@ int steps_per_frame = 4;
 
 void update_reaction_diffusion();
 void update_pixels(Color*);
+void init_grid(bool noise);
 
 int wrap(int v, int limit){
 
@@ -62,7 +65,48 @@ inline void react(float a, float b, float lap_a, float lap_b,
     out_b = b + DT * (D_B * lap_b + ab2 - (f + k) * b);
 }
 
-int main() {
+int main(int argc, char** argv) {
+
+    // ---- CLI: optional headless export mode (no window) ----
+    bool headless = false;
+    bool noise_seed = false;
+    int steps = 40000;
+    const char* out_path = "output.png";
+
+    for (int i = 1; i < argc; i++){
+        const string arg = argv[i];
+        auto next = [&](const char* what) -> const char* {
+            if (i + 1 >= argc){ fprintf(stderr, "Missing value for %s\n", what); exit(1); }
+            return argv[++i];
+        };
+        if      (arg == "--headless") headless = true;
+        else if (arg == "--f")        f = stof(next("--f"));
+        else if (arg == "--k")        k = stof(next("--k"));
+        else if (arg == "--steps")    steps = stoi(next("--steps"));
+        else if (arg == "--out")      out_path = next("--out");
+        else if (arg == "--seed")     noise_seed = (string(next("--seed")) == "noise");
+        else {
+            fprintf(stderr, "Unknown option: %s\n", arg.c_str());
+            fprintf(stderr, "Usage: %s [--headless] [--f <feed>] [--k <kill>] [--steps <n>] [--seed square|noise] [--out <file.png>]\n", argv[0]);
+            return 1;
+        }
+    }
+
+    if (headless){
+        init_grid(noise_seed);
+
+        for (int s = 0; s < steps; s++) update_reaction_diffusion();
+
+        update_pixels(frame_buffer.data());
+
+        // ExportImage works without a window: wrap the CPU pixel buffer in an
+        // Image (it points at our data, no copy) and write the PNG directly.
+        Image img = { frame_buffer.data(), COLS, ROWS, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+        ExportImage(img, out_path);
+        printf("Exported %d steps (f=%.4f k=%.4f) to %s\n", steps, f, k, out_path);
+        return 0;
+    }
+
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Gray-Scott - raylib");
     SetTargetFPS(60);
 
@@ -72,14 +116,8 @@ int main() {
     Texture2D screenTexture = LoadTextureFromImage(screenImage);
     UnloadImage(screenImage);
 
-    // Set a group of cells with chemical B
-    for (int r = (ROWS/2)-5; r < (ROWS/2)+5; r++){
-        for (int c = (COLS/2)-5; c < (COLS/2)+5; c++){
-            const int i = r * COLS + c;
-            A[i] = 0.0f;
-            B[i] = 1.0f;
-        }
-    }
+    // Seed the chemical fields
+    init_grid(false);
 
     while (!WindowShouldClose()) {
 
@@ -112,6 +150,36 @@ int main() {
     CloseWindow();
 
     return 0;
+}
+
+// Seed the chemical fields: A everywhere, then a patch of B in the middle
+// ("square") or scattered random patches ("noise").
+void init_grid(bool noise){
+
+    fill(A.begin(), A.end(), 1.0f);
+    fill(B.begin(), B.end(), 0.0f);
+
+    if (noise){
+        // Deterministic seed so headless runs are reproducible
+        mt19937 rng(1234);
+        uniform_real_distribution<float> dist(0.0f, 1.0f);
+        for (int r = 0; r < ROWS; r++){
+            for (int c = 0; c < COLS; c++){
+                if (dist(rng) < 0.02f){
+                    A[r * COLS + c] = 0.0f;
+                    B[r * COLS + c] = 1.0f;
+                }
+            }
+        }
+    } else {
+        for (int r = (ROWS/2)-10; r < (ROWS/2)+10; r++){
+            for (int c = (COLS/2)-10; c < (COLS/2)+10; c++){
+                const int i = r * COLS + c;
+                A[i] = 0.0f;
+                B[i] = 1.0f;
+            }
+        }
+    }
 }
 
 void update_reaction_diffusion(){
